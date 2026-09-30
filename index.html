@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meble Joanna - Producent mebli tapicerowanych · Skarżysko-Kamienna</title>
-<meta name="description" content="Meble Joanna - rodzinny producent mebli tapicerowanych spod Skarżyska-Kamiennej. Narożniki, sofy, łóżka i pufy szyte pod wymiar pokoju. Ocena 5,0 w Google.">
+<meta name="description" content="Meble Joanna - rodzinny producent mebli tapicerowanych spod Skarżyska-Kamiennej. Narożniki, sofy i kanapy szyte pod wymiar pokoju. Ocena 5,0 w Google.">
 <link rel="canonical" href="https://kris20032.github.io/meble-joanna/">
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pl_PL">
 <meta property="og:site_name" content="Meble Joanna">
 <meta property="og:title" content="Meble Joanna - Producent mebli tapicerowanych · Skarżysko-Kamienna">
-<meta property="og:description" content="Meble Joanna - rodzinny producent mebli tapicerowanych spod Skarżyska-Kamiennej. Narożniki, sofy, łóżka i pufy szyte pod wymiar pokoju. Ocena 5,0 w Google.">
+<meta property="og:description" content="Meble Joanna - rodzinny producent mebli tapicerowanych spod Skarżyska-Kamiennej. Narożniki, sofy i kanapy szyte pod wymiar pokoju. Ocena 5,0 w Google.">
 <meta property="og:url" content="https://kris20032.github.io/meble-joanna/">
 <meta property="og:image" content="https://kris20032.github.io/meble-joanna/img/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -21,13 +21,33 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=9a1f56e1">
+<link rel="stylesheet" href="assets/styles.css?v=20260930">
+<link rel="preload" as="image" href="img/logo.png" fetchpriority="high">
+<link rel="preload" as="image" href="img/logo-podpis.png">
+<script>
+/* KURTYNA Z LOGO - zapalenie. W <head> BEZ defer: z defer przez ułamek sekundy
+   widać stronę, a dopiero potem zasłonę. Raz na wizytę; ?intro = zagraj ponownie.
+   Automaty (zrzuty, bramki) bez ?intro dostają od razu stronę. */
+(function(){
+  try{
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    var pokaz = location.search.indexOf('intro') >= 0;
+    if (!pokaz) {
+      try { if (navigator.webdriver) return; } catch(e){}
+      try { if (sessionStorage.getItem('mj-intro')) return;
+            sessionStorage.setItem('mj-intro','1'); } catch(e){}
+    }
+    document.documentElement.classList.add('intro-on','bez-wejscia-tla');
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><img class="i-podpis" src="img/logo-podpis.png" alt="" width="1887" height="96"><span class="i-szew"></span></div>
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand brand-has-logo" href="index.html"><img class="brand-logo" src="img/logo.png" alt="Meble Joanna" width="547" height="334" decoding="async"></a>
+    <a class="brand brand-has-logo" href="index.html"><img class="brand-logo" src="img/logo.png" alt="Meble Joanna" width="1887" height="909" decoding="async" fetchpriority="high"></a>
     <nav class="nav-links">
       <a href="index.html" class="active" aria-current="page">Strona główna</a>
       <a href="realizacje.html">Realizacje</a>
@@ -39,6 +59,114 @@
     <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
 </header>
+<script>
+/* KURTYNA Z LOGO - pomiar i sterowanie. TUŻ ZA </header>: skrypt z końca strony
+   rusza ~300 ms później, a przy budżecie ~1,5 s to różnica między płynnie a ospale. */
+(function(){
+  var h = document.documentElement;
+  if (!h.classList.contains('intro-on')) return;
+  var brand = document.querySelector('.brand'),
+      logo  = document.querySelector('.brand-logo'),
+      podpis = document.querySelector('.i-podpis'),
+      nav   = document.querySelector('.nav');
+  var zgloszone = false;
+  /* sygnał dla tekstu hero (main.js): kaskada rusza, gdy zasłona idzie w górę */
+  function sygnal(){
+    if (zgloszone) return; zgloszone = true;
+    h.setAttribute('data-wejscie', 'koniec');
+    try { document.dispatchEvent(new Event('wejscie:koniec')); } catch(e){}
+  }
+  function sprzataj(){ sygnal(); h.classList.remove('intro-on','intro-znak','intro-gra','intro-out'); }
+  if (!brand || !logo || !podpis || !nav) { sprzataj(); return; }
+
+  /* NIC nie rusza, dopóki logo i podpis nie są POBRANE I ZDEKODOWANE - inaczej
+     takt wyłaniania gra na pustym miejscu i klient widzi pół logo, które ucieka.
+     Nie doczekamy się w CZEKANIE ms - odpuszczamy wejście i pokazujemy stronę. */
+  var CZEKANIE = 1400, ruszylo = false, odpuszczone = false;
+  function gotowy(im){ return im.complete && im.naturalWidth > 0; }
+  function pobrane(){ return gotowy(logo) && gotowy(podpis); }
+  function odpusc(){ if (ruszylo || odpuszczone) return; odpuszczone = true; sprzataj(); }
+  function dekoduj(im){ return im.decode ? im.decode().catch(function(){}) : null; }
+  function graj(){ if (!ruszylo && !odpuszczone) { ruszylo = true; wejscie(); } }
+  function zacznij(){
+    if (ruszylo || odpuszczone || !pobrane()) return;
+    if (window.Promise && logo.decode) Promise.all([dekoduj(logo), dekoduj(podpis)]).then(graj, graj);
+    else graj();
+  }
+  if (pobrane()) zacznij();
+  else {
+    [logo, podpis].forEach(function(im){
+      im.addEventListener('load', zacznij);
+      im.addEventListener('error', odpusc);
+    });
+    setTimeout(function(){ if (pobrane()) zacznij(); else odpusc(); }, CZEKANIE);
+  }
+
+  function wejscie(){
+    /* mierzymy logo tam, gdzie stoi naturalnie - `intro-znak` (wyjmuje je z układu)
+       dokładamy dopiero niżej */
+    var r = logo.getBoundingClientRect(), br = brand.getBoundingClientRect();
+    if (!r.width || !r.height) { sprzataj(); return; }
+    var W = document.documentElement.clientWidth || innerWidth, H = innerHeight;
+    /* proporcje wzięte z pliku: znak 1887x909, podpis 1887x96, odstęp jak w oryginale */
+    var PROP = 909 / 1887, PODPIS = 96 / 1887, ODSTEP = 0.017;
+    /* sufit z PIKSELI PLIKU / gęstość ekranu - powyżej tego znak byłby miękki */
+    var sufit = 1887 / Math.min(window.devicePixelRatio || 1, 3);
+    var cel = (W < 680) ? Math.min(W * 0.74, 330) : Math.min(W * 0.36, 470);
+    cel = Math.min(cel, H * 0.5 / (PROP + ODSTEP + PODPIS + 0.06));
+    cel = Math.round(Math.max(r.width, Math.min(cel, sufit)));
+    var lh = cel * PROP, gap = cel * ODSTEP, th = cel * PODPIS, sz = Math.max(16, cel * 0.06);
+    /* cała grupa (znak + podpis + ścieg) wyśrodkowana w pionie */
+    var cy = H / 2 - (gap + th + sz) / 2;
+    h.style.setProperty('--i-w', cel + 'px');
+    h.style.setProperty('--i-h', Math.round(lh) + 'px');
+    h.style.setProperty('--i-cx', Math.round(W / 2) + 'px');
+    h.style.setProperty('--i-cy', Math.round(cy) + 'px');
+    h.style.setProperty('--i-tag-top', Math.round(cy + lh / 2 + gap) + 'px');
+    h.style.setProperty('--i-szew-top', Math.round(cy + lh / 2 + gap + th + sz) + 'px');
+    h.style.setProperty('--i-zmniejsz', (r.width / cel).toFixed(4));
+    h.style.setProperty('--i-baza-w', Math.round(br.width) + 'px');
+    h.style.setProperty('--i-baza-h', Math.round(br.height) + 'px');
+    h.style.setProperty('--i-px', Math.round(r.left + r.width / 2 - W / 2) + 'px');
+    h.style.setProperty('--i-py', Math.round(r.top + r.height / 2 - cy) + 'px');
+    h.classList.add('intro-znak');
+
+    var zdjete = false;
+    function koniec(){
+      if (zdjete) return; zdjete = true;
+      h.classList.add('intro-out');
+      sygnal();
+      setTimeout(sprzataj, 900);
+    }
+    /* DWIE klatki - po jednej przeglądarka skleja stan startowy z końcowym */
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      h.classList.add('intro-gra');
+      /* zasłona schodzi, gdy gotowe jest HERO - nie po sztywnym timerze i nie po
+         window.load (ten czeka na wszystkie zdjęcia strony) */
+      var start = Date.now(), MIN = 720, SUFIT = 1000, zaladowane = false, hero = null;
+      function heroGotowe(){
+        if (!hero) hero = document.querySelector('.hero-cine img');
+        return !!(hero && hero.complete && hero.naturalWidth > 0);
+      }
+      function moze(){
+        if (zdjete) return;
+        if (Date.now() - start >= MIN && (heroGotowe() || zaladowane)) koniec();
+        else setTimeout(moze, 70);
+      }
+      window.addEventListener('load', function(){ zaladowane = true; moze(); });
+      moze();
+      setTimeout(koniec, SUFIT);
+    }); });
+    /* bezpieczniki NIEZALEŻNE od klatek (karta w tle wstrzymuje rAF),
+       liczone od startu animacji, nie od parsowania strony */
+    setTimeout(koniec, 2000);
+    setTimeout(sprzataj, 3100);
+    ['click','wheel','touchstart','keydown'].forEach(function(z){
+      window.addEventListener(z, koniec, {passive:true});
+    });
+  }
+})();
+</script>
 
 <main>
 <section class="hero-cine">
@@ -47,7 +175,7 @@
     <div class="hero-copy">
       <div class="brandmark bm-l"><span class="bm-line"><span>Meble Joanna</span></span></div>
       <h1>Narożniki i sofy szyte pod Twój salon</h1>
-      <p class="lead">Robimy meble tapicerowane na zamówienie. Wymiar dopasowujemy do pokoju, a tkaninę i kolor wybierasz razem z nami.</p>
+      <p class="lead">Szyjemy narożniki, sofy i kanapy na zamówienie. Wymiar dopasowujemy do pokoju, a tkaninę i kolor wybierasz razem z nami.</p>
       <div class="hero-actions">
         <a href="realizacje.html" class="btn btn-accent">Zobacz realizacje <span class="arr">→</span></a>
         <a href="kontakt.html" class="btn btn-ghost btn-on-dark">Zapytaj o wycenę</a>
@@ -58,7 +186,7 @@
 </section>
 <section class="strip n-4" style="padding-block:0">
   <div class="wrap">
-    <div class="item reveal"><div class="k">Na wymiar</div><div class="v">narożniki, sofy i łóżka pod Twój pokój</div></div>
+    <div class="item reveal"><div class="k">Na wymiar</div><div class="v">narożniki, sofy i kanapy pod Twój pokój</div></div>
     <div class="item reveal"><div class="k">Tkanina i kolor</div><div class="v">dobierasz razem z nami</div></div>
     <div class="item reveal"><div class="k">Rodzinna firma</div><div class="v">z Michałowa pod Skarżyskiem-Kamienną</div></div>
     <div class="item reveal"><div class="k">Dowóz</div><div class="v">także poza województwo świętokrzyskie</div></div>
@@ -79,7 +207,7 @@
     <div class="split-copy reveal">
       <span class="eyebrow">O nas</span>
       <h2>Meble szyte w Michałowie</h2>
-      <p class="muted">Wypoczynki i łóżka robimy pod wymiar pokoju, w tkaninie wybranej przez Ciebie. Nasze narożniki jeżdżą też do klientów spoza województwa.</p>
+      <p class="muted">Narożniki, sofy i kanapy szyjemy pod wymiar pokoju, w tkaninie wybranej przez Ciebie. Nasze narożniki jeżdżą też do klientów spoza województwa.</p>
 
       <a href="o-nas.html" class="btn btn-ghost">Poznaj nas <span class="arr">→</span></a>
     </div>
@@ -88,9 +216,9 @@
 <section class="gateways-band">
   <div class="wrap">
     <div class="gateways">
-      <a href="oferta.html" class="gateway reveal"><img src="img/g1.jpg" alt="Narożniki na wymiar" loading="lazy" width="1518" height="1106" decoding="async"><span class="g-ttl">Narożniki na wymiar</span></a>
-      <a href="oferta.html" class="gateway reveal"><img src="img/g7.jpg" alt="Sofy i kanapy" loading="lazy" width="1600" height="1200" decoding="async"><span class="g-ttl">Sofy i kanapy</span></a>
-      <a href="oferta.html" class="gateway reveal"><img src="img/g5.jpg" alt="Łóżka tapicerowane" loading="lazy" width="1600" height="2133" decoding="async"><span class="g-ttl">Łóżka tapicerowane</span></a>
+      <a href="oferta.html" class="gateway reveal"><img src="img/g1.jpg" alt="Narożnik z szufladą w boczku" loading="lazy" width="1518" height="1106" decoding="async"><span class="g-ttl">Narożniki na wymiar</span></a>
+      <a href="oferta.html" class="gateway reveal"><img src="img/g7.jpg" alt="Sofa w morskiej tkaninie na metalowych nóżkach" loading="lazy" width="1600" height="1200" decoding="async"><span class="g-ttl">Sofy</span></a>
+      <a href="oferta.html" class="gateway reveal"><img src="img/g2.jpg" alt="Kanapa w dwóch kolorach tkaniny" loading="lazy" width="1502" height="2044" decoding="async"><span class="g-ttl">Kanapy</span></a>
     </div>
   </div>
 </section>
@@ -117,14 +245,13 @@
     <div class="head reveal">
       <span class="eyebrow">Realizacje</span>
       <h2>Meble z naszej pracowni</h2>
-      <p>Narożniki, sofy i łóżka uszyte na zamówienie. Każdy w innej tkaninie i w innym wymiarze.</p>
+      <p>Narożniki, sofy i kanapy uszyte na zamówienie. Każdy w innej tkaninie i w innym wymiarze.</p>
     </div>
     <div class="gallery">
-      <div class="tile t-two3 reveal"><img src="img/g2.jpg" alt="Meble Joanna" loading="lazy" width="1502" height="2044" decoding="async"></div>
-      <div class="tile t-third reveal"><img src="img/g4.jpg" alt="Meble Joanna" loading="lazy" width="1474" height="2024" decoding="async"></div>
-      <div class="tile t-third reveal"><img src="img/g8.jpg" alt="Meble Joanna" loading="lazy" width="1058" height="778" decoding="async"></div>
-      <div class="tile t-third reveal"><img src="img/g9.jpg" alt="Meble Joanna" loading="lazy" width="1100" height="824" decoding="async"></div>
-      <div class="tile t-third reveal"><img src="img/about.jpg" alt="Meble Joanna" loading="lazy" width="1600" height="2133" decoding="async"></div>
+      <div class="tile t-two3 reveal"><img src="img/g10.jpg" alt="Przeszycia w romby na kanapie z bliska" loading="lazy" width="1000" height="400" decoding="async"></div>
+      <div class="tile t-third reveal"><img src="img/g8.jpg" alt="Pikowane oparcie kanapy z bliska" loading="lazy" width="1058" height="778" decoding="async"></div>
+      <div class="tile t-third reveal"><img src="img/g9.jpg" alt="Szuflada w boczku narożnika" loading="lazy" width="1100" height="824" decoding="async"></div>
+      <div class="tile t-two3 reveal"><img src="img/g4.jpg" alt="Zielony narożnik z pikowanym oparciem" loading="lazy" width="1474" height="2024" decoding="async"></div>
     </div>
     <div style="margin-top:var(--space-7)" class="reveal"><a href="realizacje.html" class="btn btn-accent">Pełna galeria <span class="arr">→</span></a></div>
   </div>
@@ -148,8 +275,8 @@
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-brand">
-        <div class="name">Meble Joanna</div>
-        <p>Robimy meble tapicerowane na zamówienie. Wymiar dopasowujemy do pokoju, a tkaninę i kolor wybierasz razem z nami.</p>
+        <img class="foot-logo" src="img/logo-pelne.png" alt="Meble Joanna - Producent Mebli Tapicerowanych" width="960" height="528" loading="lazy" decoding="async">
+        <p>Szyjemy narożniki, sofy i kanapy na zamówienie. Wymiar dopasowujemy do pokoju, a tkaninę i kolor wybierasz razem z nami.</p>
       </div>
       <div class="foot-col">
         <h4>Nawigacja</h4>
@@ -179,6 +306,6 @@
 <div class="sticky-reserve"><a class="sr-book" href="kontakt.html">Zapytaj o wycenę</a><a class="sr-call" href="tel:+48793091004" aria-label="Zadzwoń"><svg class="ico-tel" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.58 3.6a1 1 0 0 1-.25 1l-2.23 2.2Z" fill="currentColor"/></svg></a></div>
 <div class="demo-wazne" data-do="2026-10-06" data-cykl="3" hidden><svg class="dw-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.2V12l3.3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="dw-txt"></span></div>
 
-<script src="assets/main.js"></script>
+<script src="assets/main.js?v=20260930"></script>
 </body>
 </html>

@@ -1665,3 +1665,116 @@ footer{view-transition-name:mt-foot}
 
 /* === szary tekst dociągnięty do czytelności (WCAG 4.5 na wszystkich tłach) === */
 :root{--muted:#686763;}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MEBLE JOANNA - poprawka 30.09.2026 (zgłoszenie Szymona: „popraw logo, ekran
+   ładowania z logo firmy").
+   1) PASEK W BARWACH LOGO. Logo klienta to złoty znak na czerni. Na jasnym pasku
+      wisiało jako mały czarny prostokąt z nieczytelnym napisem. Teraz znak ma
+      wycięte tło (przezroczysty PNG, 4x większa rozdzielczość niż plik z FB),
+      a pasek ma kolor tła z ich własnej wizytówki.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{--mj-czern:#0f0e0c;--mj-zloto:#ecdd8a}
+html{scrollbar-gutter:stable}
+.nav{background:rgba(15,14,12,.97);border-bottom:1px solid rgba(236,221,138,.14)}
+.nav.is-stuck{box-shadow:0 14px 30px -18px rgba(0,0,0,.55)}
+.nav-links a{color:rgba(247,242,226,.76)}
+.nav-links a:hover,.nav-links a.active{color:#fbf8ee}
+.nav-links a::after{background:var(--mj-zloto)}
+.nav-toggle span{background:#f4eed9}
+.brand-logo{height:64px;max-width:none}
+.nav.is-stuck .brand-logo{height:52px}
+@media(max-width:680px){
+  .brand-logo{height:48px;max-width:none}
+  .nav-links{background:var(--mj-czern);border-bottom:1px solid rgba(236,221,138,.14)}
+  .nav-links a{border-bottom:1px solid rgba(255,255,255,.08)}
+}
+/* pełne logo (z podpisem) w stopce - złoto na ciemnym tle, jak na ich wizytówce */
+.foot-logo{display:block;width:min(230px,72%);height:auto}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2) KURTYNA Z LOGO (ekran powitalny) - TYLKO strona główna, raz na wizytę.
+   `?intro` w adresie = zagraj jeszcze raz (do pokazywania klientowi).
+   Opowiada produkt: znak pisze się od lewej jak podpis, pod nim dochodzi podpis
+   firmy i przeszycie (szew tapicerski), a potem czarna płachta z obszytym
+   brzegiem zwija się w górę do paska, a logo ląduje na swoim miejscu.
+   Bezpieczniki: zasłona domyślnie `display:none` (włącza ją skrypt) · twarde
+   timery 2 s / 3,1 s · klik-scroll-dotyk-klawisz przerywa · reduced-motion pomija.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* fade zdjęcia hero grałby POD zasłoną - klasa TRWAŁA, nie zdejmowana z intro-on */
+.bez-wejscia-tla .hero-cine>img{animation:none}
+
+#intro{display:none}
+.intro-on #intro{
+  display:block;position:fixed;inset:0;z-index:300;background:var(--mj-czern);
+  /* wolny start: brzeg płachty zostaje w dole, dopóki logo nie odleci do paska */
+  transform:translateY(0);transition:transform .74s cubic-bezier(.66,0,.24,1)}
+/* obszyty brzeg płachty - widać go, gdy zasłona się zwija */
+.intro-on #intro::after{
+  content:"";position:absolute;left:0;right:0;bottom:12px;height:1.5px;
+  background:repeating-linear-gradient(90deg,rgba(236,221,138,.55) 0 9px,transparent 9px 16px)}
+.intro-on.intro-out #intro{transform:translateY(-100%);pointer-events:none}
+.intro-on body{overflow:hidden}
+
+/* drugi takt: podpis firmy (wycięty z ich logo) odsłaniany od lewej */
+.i-podpis{
+  position:absolute;left:50%;top:var(--i-tag-top,60%);width:var(--i-w,300px);height:auto;max-width:none;
+  transform:translateX(-50%);clip-path:inset(0 100% 0 0);filter:blur(8px)}
+.intro-on.intro-gra .i-podpis{
+  clip-path:inset(0 0 0 0);filter:blur(0px);
+  transition:clip-path .5s cubic-bezier(.16,1,.3,1) .16s,filter .5s cubic-bezier(.16,1,.3,1) .16s}
+/* trzeci takt: przeszycie - ścieg dochodzi od lewej jak spod maszyny */
+.i-szew{
+  position:absolute;left:50%;top:var(--i-szew-top,66%);width:calc(var(--i-w,300px) * .56);height:1.5px;
+  background:repeating-linear-gradient(90deg,var(--mj-zloto) 0 8px,transparent 8px 14px);
+  transform:translateX(-50%);clip-path:inset(0 100% 0 0)}
+.intro-on.intro-gra .i-szew{clip-path:inset(0 0 0 0);transition:clip-path .56s cubic-bezier(.16,1,.3,1) .28s}
+.intro-on.intro-out .i-podpis,.intro-on.intro-out .i-szew{opacity:0;transition:opacity .2s linear}
+
+/* Pasek nad zasłoną, widać z niego tylko logo. `intro-znak` dokłada skrypt DOPIERO
+   po zmierzeniu logo w jego naturalnym miejscu. iOS: na czas wejścia pasek bez
+   backdrop-filter (WebKit potrafi narysować rozmycie NAD lecącym logo), a logo
+   w żadnym stanie bez drop-shadow (iOS rysuje go jako jasny prostokąt). */
+.intro-znak .nav{z-index:301;-webkit-backdrop-filter:none;backdrop-filter:none;
+  background:var(--mj-czern);border-bottom-color:transparent}
+.intro-znak .nav-links,.intro-znak .nav-toggle{opacity:0}
+.intro-znak.intro-out .nav-links,.intro-znak.intro-out .nav-toggle{opacity:1;transition:opacity .5s var(--ease) .32s}
+/* logo wychodzi z układu - blok marki trzyma jego miejsce, pasek nie podskakuje */
+.intro-znak .brand{width:var(--i-baza-w);height:var(--i-baza-h);flex:0 0 auto}
+/* ⛔ zero zwykłego opacity+scale: maska od lewej + rozmycie schodzące do ostrości.
+   Logo ma na kurtynie SWÓJ prawdziwy rozmiar (width/height), a do paska wraca
+   scale() MNIEJSZYM od 1 - powiększanie transformem rozmywa znak na telefonie. */
+.intro-znak .brand-logo{
+  position:fixed;left:var(--i-cx);top:var(--i-cy);
+  width:var(--i-w);height:var(--i-h);max-width:none;
+  transform:translate(-50%,-50%) scale(1.045);
+  clip-path:inset(0 100% 0 0);filter:blur(14px)}
+.intro-znak.intro-gra .brand-logo{
+  transform:translate(-50%,-50%) scale(1);clip-path:inset(0 0 0 0);filter:blur(0px);
+  transition:transform .55s cubic-bezier(.16,1,.3,1),clip-path .55s cubic-bezier(.16,1,.3,1),
+             filter .55s cubic-bezier(.16,1,.3,1)}
+.intro-znak.intro-out .brand-logo{
+  transform:translate(calc(-50% + var(--i-px)),calc(-50% + var(--i-py))) scale(var(--i-zmniejsz));
+  filter:blur(0px);transition:transform .74s cubic-bezier(.16,.84,.44,1)}
+
+@media (prefers-reduced-motion:reduce){
+  .intro-on #intro{display:none}
+  .intro-on body{overflow:auto}
+  .intro-znak .brand-logo{position:static;width:auto;height:64px;transform:none!important;
+    filter:none!important;clip-path:none!important}
+  .intro-znak .nav-links,.intro-znak .nav-toggle{opacity:1}
+}
+
+/* Po kurtynie nazwa firmy była już pokazana logiem - wejście nazwy w hero jest
+   skromniejsze (mniejsze powiększenie), a nagłówek i przyciski dochodzą szybciej.
+   `bez-wejscia-tla` stoi na <html> tylko wtedy, gdy kurtyna naprawdę zagrała. */
+.bez-wejscia-tla.bm-on .hero-cine .brandmark{transform:scale(1.12)}
+.bez-wejscia-tla.bm-on .hero-cine .brandmark.bm-in{
+  transform:scale(1);transition:opacity .5s ease .12s, transform .8s cubic-bezier(.16,.84,.44,1) .12s}
+.bez-wejscia-tla.bm-on .hero-cine .brandmark.bm-in ~ .eyebrow{transition:opacity .55s ease .3s}
+.bez-wejscia-tla.bm-on .hero-cine .brandmark.bm-in ~ h1{transition:opacity .55s ease .38s}
+.bez-wejscia-tla.bm-on .hero-cine .brandmark.bm-in ~ .lead{transition:opacity .55s ease .46s}
+.bez-wejscia-tla.bm-on .hero-cine .brandmark.bm-in ~ .hero-actions{transition:opacity .55s ease .54s}
+/* etykieta nad nagłówkiem podstrony na jasnym fragmencie zdjęcia miała 4,1:1 - lekki cień pod literami */
+.pagehead .eyebrow{text-shadow:0 1px 14px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
